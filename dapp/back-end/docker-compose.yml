@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: ./compose/production/postgres/dockerfile
+    image: backend_server_production_postgres
+    container_name: postgres
+    volumes:
+      - ./local_postgres_data:/var/lib/postgresql/data:Z
+      - ./local_postgres_data_backups:/backups:z
+    env_file:
+      - .envs/.local/.postgres
+    ports:
+      - '5433:5432'
+  dapp-api:
+    container_name: api
+    build: .
+    working_dir: /code/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      DEBUG: 1
+    volumes:
+      - ./app:/code/app
+    ports:
+      - 8000:8000
+    depends_on:
+      - postgres
+    restart: on-failure
